@@ -17,39 +17,46 @@ public class GdPoster {
     public static final int A4Breed = 210;
 
     static int breedteDoel, rest_mm, hoogteDoel, imageHoogteInPX;
-    private static int imageBreedteInPX;
-    static File currentFile ;
+    static int imageBreedteInPX;
+    static File currentFile;
+    static BufferedImage source;
 
     /**
      * @param args the command line arguments
      */
-    public static void main(String[] args) {
-        breedteDoel = 1000;
-        hoogteDoel = 1000;
-        imageBreedteInPX = 2000;
-        imageHoogteInPX = 3000;
-         currentFile = new File("C:\\Users\\User\\Pictures\\142_1440.jpg");
+    public static void main(String[] args) throws IOException {
+        
+        breedteDoel = Integer.parseInt(args[1]);
+        hoogteDoel = Integer.parseInt(args[2]);
+        currentFile = new File(args[0]);
+//        currentFile = new File("C:\\Users\\User\\Pictures\\142_1440.jpg");
+        BufferedImage source = ImageIO.read(currentFile);
+        imageBreedteInPX = source.getWidth();
+        imageHoogteInPX = source.getHeight();
+//        System.out.println("image Breedte" + imageBreedteInPX);
 //        System.out.println(heleMalenA4l());
-        System.out.println(aantalA4LinDoel());
+//        System.out.println(aantalA4LinDoel());
 //        System.out.println(restDoel());
 //        System.out.println(A4LBreedteInPX());
-        int oudej = 0;
-        int j;
-        for (j = A4PHoogteInPX(); j < imageHoogteInPX; j = j + A4PHoogteInPX()) {
-            System.out.println(oudej + " Vertikaal tot  " + j);
-            oudej = j;
-
-            int oudei = 0;
-            int i;
-            for (i = A4LBreedteInPX(); i < imageBreedteInPX; i = i + A4LBreedteInPX()) {
-                System.out.println(oudei + " tot  " + i);
-                deelImage(0,20,40,100);
-                oudei = i;
+        int oudeVerticale = 0;
+        int verticale = 0;
+        for (verticale = A4PHoogteInPX();
+                verticale < imageHoogteInPX;
+                verticale = verticale + A4PHoogteInPX()) {
+//            System.out.println(oudeVerticale + " Vertikaal   " + verticale);
+            int oudeHorisontale = 0;
+            int horisontale = 0;
+            for (horisontale = A4LBreedteInPX();
+                    horisontale < imageBreedteInPX;
+                    horisontale = horisontale + A4LBreedteInPX()) {
+//                System.out.println(oudeHorisontale + " horisontale  " + horisontale);
+                deelImage(oudeHorisontale, oudeVerticale,
+                        horisontale, verticale);
+                oudeHorisontale = horisontale;
             }
-            System.out.println(oudei + " tot  " + imageBreedteInPX);
+//            System.out.println("verticale na for loop horisontale " + verticale);
+            oudeVerticale = verticale;
         }
-        System.out.println(oudej + " Vertikaal tot  " + imageHoogteInPX);
-
     }
 
     static int restDoelBreedte() {
@@ -93,6 +100,7 @@ public class GdPoster {
     static int A4PHoogteInPX() {
         int eruit;
         eruit = (int) (imageHoogteInPX / aantalA4PinDoel());
+//        System.out.println("eruit = " + eruit);
         return (eruit);
     }
 
@@ -113,37 +121,42 @@ public class GdPoster {
 
     }
 
-    static public void deelImage(int drukX, int drukY, int losX, int losY) {
+    static public void deelImage(int oudX, int oudY, int newX, int newY) {
         try {
             // make  deel image
 //                    File inputFile = new File(GdImageParting.starFile);
             String erinExtension = getExtension(currentFile.getName());
-            final BufferedImage source = ImageIO.read(currentFile);
-//            System.out.println("SelectRectangle.MListener.mouseReleased()" + drukX + " " + drukY + " " + losX + " " + losY);
-            int maxX = source.getWidth();
-            int maxY = source.getHeight();
 
-            int linksX = Math.min(losX, drukX);
-            int bovenY = Math.min(losY, drukY);
-
-            int rechtsX = Math.max(losX, drukX);
-            rechtsX = Math.min(rechtsX, maxX);
-            int onderY = Math.max(losY, drukY);
-            onderY = Math.min(onderY, maxY);
-
-            int widthX = rechtsX - linksX;
-            int widthY = onderY - bovenY;
-            if (widthX > 0 & widthY > 0) {
-                ImageIO.write(source.getSubimage(linksX, bovenY, widthX, widthY), erinExtension, maakSubFile(currentFile));
-            } else {
-                System.out.println(" Geen image gemaakt omdat coor 0 zijn");
+//            int maxX = source.getWidth();
+            int maxX = imageBreedteInPX;
+//            int maxY = source.getHeight();
+            int maxY = imageHoogteInPX;
+            int wijdte, hoogte;
+            wijdte = newX - oudX;
+            hoogte = newY - oudY;
+            if (maxX < newX) {
+                wijdte = maxX - oudX;
             }
+
+            if (maxY < newY) {
+                hoogte = maxY - oudY;
+            }
+//            System.out.println(oudX);
+//            System.out.println(newX);
+//            System.out.println(oudY);
+//            System.out.println(newY);
+            BufferedImage source = ImageIO.read(currentFile);
+            ImageIO.write(source.getSubimage(oudX, oudY, wijdte, hoogte), erinExtension, maakSubFile(currentFile));
+//            } else {
+//                System.out.println(" Geen image gemaakt omdat coor 0 zijn");
+//            }
 //                    ImageIO.write(source.getSubimage(linksX, bovenY, widthX, widthY), erinExtension, new File(inputFile.getCanonicalPath() + idx++ + "." + erinExtension));
         } catch (IOException ex) {
             System.out.println("gdposter.GdPoster.maalDeelImge()  IO exception ");
         }
     }
-        public static String getExtension(String fileName) {
+
+    public static String getExtension(String fileName) {
         int index = fileName.lastIndexOf('.');
         if (index == -1) {
             return "";

@@ -7,9 +7,12 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import static java.lang.Math.abs;
+import static java.lang.System.exit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageIO;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
 
 public class GdPoster {
 
@@ -20,43 +23,115 @@ public class GdPoster {
     static int imageBreedteInPX;
     static File currentFile;
     static BufferedImage source;
+    private static boolean eindeHorisontaalBereikt;
+    private static boolean eindeVertikaalBereikt;
+    static JFrame frame;
 
     /**
      * @param args the command line arguments
      */
     public static void main(String[] args) throws IOException {
-        
-        breedteDoel = Integer.parseInt(args[1]);
-        hoogteDoel = Integer.parseInt(args[2]);
-        currentFile = new File(args[0]);
+        JFrame.setDefaultLookAndFeelDecorated(true);
+        frame = new JFrame();
+        JFileChooser fc = new JFileChooser();
+        int returnVal = fc.showOpenDialog(frame);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+//            File file = fc.getSelectedFile();
+            currentFile = fc.getSelectedFile();
+
+            eindeHorisontaalBereikt = false;
+            eindeVertikaalBereikt = false;
+            breedteDoel = Integer.parseInt(args[0]);
+            hoogteDoel = Integer.parseInt(args[1]);
+//            currentFile = new File(args[0]);
 //        currentFile = new File("C:\\Users\\User\\Pictures\\142_1440.jpg");
-        BufferedImage source = ImageIO.read(currentFile);
-        imageBreedteInPX = source.getWidth();
-        imageHoogteInPX = source.getHeight();
+            BufferedImage source = ImageIO.read(currentFile);
+            imageBreedteInPX = source.getWidth();
+            imageHoogteInPX = source.getHeight();
 //        System.out.println("image Breedte" + imageBreedteInPX);
 //        System.out.println(heleMalenA4l());
 //        System.out.println(aantalA4LinDoel());
 //        System.out.println(restDoel());
 //        System.out.println(A4LBreedteInPX());
-        int oudeVerticale = 0;
-        int verticale = 0;
-        for (verticale = A4PHoogteInPX();
-                verticale < imageHoogteInPX;
-                verticale = verticale + A4PHoogteInPX()) {
+            int oudeVerticale = 0;
+            int verticale, horisontale, oudeHorisontale;
+            eindeVertikaalBereikt = false;
+            verticale = A4PHoogteInPX();
+            do {
 //            System.out.println(oudeVerticale + " Vertikaal   " + verticale);
-            int oudeHorisontale = 0;
-            int horisontale = 0;
-            for (horisontale = A4LBreedteInPX();
-                    horisontale < imageBreedteInPX;
-                    horisontale = horisontale + A4LBreedteInPX()) {
+                oudeHorisontale = 0;
+                eindeHorisontaalBereikt = false;
+                horisontale = A4LBreedteInPX();
+                do {
 //                System.out.println(oudeHorisontale + " horisontale  " + horisontale);
-                deelImage(oudeHorisontale, oudeVerticale,
-                        horisontale, verticale);
-                oudeHorisontale = horisontale;
-            }
+                    deelImage(oudeHorisontale, oudeVerticale, horisontale, verticale);
+                    oudeHorisontale = horisontale;
+                    horisontale = horisontale + A4LBreedteInPX();
+
+                } while (!eindeHorisontaalBereikt);
 //            System.out.println("verticale na for loop horisontale " + verticale);
-            oudeVerticale = verticale;
+                oudeVerticale = verticale;
+                verticale = verticale + A4PHoogteInPX();
+
+            } while (!eindeVertikaalBereikt);
         }
+exit(0);
+    }
+
+    static public File maakSubFile(File bronFile) {
+        File eruit;
+        int fileNummer = 1;
+        File workDir = bronFile.getParentFile();
+        int extensionIndex = bronFile.getName().lastIndexOf(".");
+        String voorvoegsel = bronFile.getName().substring(0, extensionIndex);
+
+//            String extension = bronFile.getName().substring(extensionIndex);
+        do {
+            eruit = new File(workDir, voorvoegsel + fileNummer + bronFile.getName().substring(extensionIndex));
+            fileNummer++;
+        } while (eruit.exists());
+
+        return eruit;
+
+    }
+
+    static public void deelImage(int oudX, int oudY, int newX, int newY) {
+//        boolean eruit = false;
+        try {
+            // make  deel image
+//                    File inputFile = new File(GdImageParting.starFile);
+            String erinExtension = getExtension(currentFile.getName());
+
+//            int maxX = source.getWidth();
+            int maxX = imageBreedteInPX;
+//            int maxY = source.getHeight();
+            int maxY = imageHoogteInPX;
+            int wijdte, hoogte;
+            wijdte = newX - oudX;
+            hoogte = newY - oudY;
+            if (maxX < newX) {
+                wijdte = maxX - oudX;
+                eindeHorisontaalBereikt = true;
+            }
+
+            if (maxY < newY) {
+                hoogte = maxY - oudY;
+                eindeVertikaalBereikt = true;
+            }
+//            System.out.println(oudX);
+//            System.out.println(newX);
+//            System.out.println(oudY);
+//            System.out.println(newY);
+            BufferedImage source = ImageIO.read(currentFile);
+            ImageIO.write(source.getSubimage(oudX, oudY, wijdte, hoogte), erinExtension, maakSubFile(currentFile));
+//            } else {
+//                System.out.println(" Geen image gemaakt omdat coor 0 zijn");
+//            }
+//                    ImageIO.write(source.getSubimage(linksX, bovenY, widthX, widthY), erinExtension, new File(inputFile.getCanonicalPath() + idx++ + "." + erinExtension));
+        } catch (IOException ex) {
+            System.out.println("gdposter.GdPoster.maalDeelImge()  IO exception ");
+        }
+//        return(eruit);
     }
 
     static int restDoelBreedte() {
@@ -102,58 +177,6 @@ public class GdPoster {
         eruit = (int) (imageHoogteInPX / aantalA4PinDoel());
 //        System.out.println("eruit = " + eruit);
         return (eruit);
-    }
-
-    static public File maakSubFile(File bronFile) {
-        File eruit;
-        int fileNummer = 1;
-        File workDir = bronFile.getParentFile();
-        int extensionIndex = bronFile.getName().lastIndexOf(".");
-        String voorvoegsel = bronFile.getName().substring(0, extensionIndex);
-
-//            String extension = bronFile.getName().substring(extensionIndex);
-        do {
-            eruit = new File(workDir, voorvoegsel + fileNummer + bronFile.getName().substring(extensionIndex));
-            fileNummer++;
-        } while (eruit.exists());
-
-        return eruit;
-
-    }
-
-    static public void deelImage(int oudX, int oudY, int newX, int newY) {
-        try {
-            // make  deel image
-//                    File inputFile = new File(GdImageParting.starFile);
-            String erinExtension = getExtension(currentFile.getName());
-
-//            int maxX = source.getWidth();
-            int maxX = imageBreedteInPX;
-//            int maxY = source.getHeight();
-            int maxY = imageHoogteInPX;
-            int wijdte, hoogte;
-            wijdte = newX - oudX;
-            hoogte = newY - oudY;
-            if (maxX < newX) {
-                wijdte = maxX - oudX;
-            }
-
-            if (maxY < newY) {
-                hoogte = maxY - oudY;
-            }
-//            System.out.println(oudX);
-//            System.out.println(newX);
-//            System.out.println(oudY);
-//            System.out.println(newY);
-            BufferedImage source = ImageIO.read(currentFile);
-            ImageIO.write(source.getSubimage(oudX, oudY, wijdte, hoogte), erinExtension, maakSubFile(currentFile));
-//            } else {
-//                System.out.println(" Geen image gemaakt omdat coor 0 zijn");
-//            }
-//                    ImageIO.write(source.getSubimage(linksX, bovenY, widthX, widthY), erinExtension, new File(inputFile.getCanonicalPath() + idx++ + "." + erinExtension));
-        } catch (IOException ex) {
-            System.out.println("gdposter.GdPoster.maalDeelImge()  IO exception ");
-        }
     }
 
     public static String getExtension(String fileName) {

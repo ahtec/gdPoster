@@ -23,7 +23,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 
 //test npp
-/*
+/*  versie 12 maart 2022
  * a4 210 * 297  
  */
 public class gdReuze {

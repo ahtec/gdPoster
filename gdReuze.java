@@ -12,7 +12,7 @@ import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 
 //test 
-/*  versie 24 maart 2022
+/*   1 april  2022
  * a4 210 * 297  
  */
 public class gdReuze {
@@ -23,6 +23,8 @@ public class gdReuze {
     public static final int A4LHoogPx = 2480;
     public static int aantalKolommenA4Breed = 2;
     public static int aantalA4Hoog = 0;
+    static int int_A4L_BreedteInPX;
+    static int int_A4L_HoogteInPX  ;
 
     static int rest_mm, uithoogteDoel, imageHoogteInPX, hoogteNaSchalen;
     static int imageBreedteInPX;
@@ -38,7 +40,7 @@ public class gdReuze {
     public static String format;
 
     public gdReuze(File inputFile, String breedte, String hoogte) {
-
+        System.out.println("Version 1 ");
         try {
             // Displaing image readers
             // Buffered image vullen met inputfile; currentfile
@@ -59,6 +61,8 @@ public class gdReuze {
             source = ImageIO.read(currentFile);
             imageBreedteInPX = source.getWidth();
             imageHoogteInPX = source.getHeight();
+            int_A4L_BreedteInPX = A4L_BreedteInPX();
+            int_A4L_HoogteInPX  = A4L_HoogteInPX();
             System.out.println("Image afm h: " + imageHoogteInPX + " b: " + imageBreedteInPX);
             int oudeVerticale = 0;
             int verticale, horisontale = 0, oudeHorisontale = 0;
@@ -70,62 +74,39 @@ public class gdReuze {
             rowNr = 0;
 //            // looping over de rijen 
             for (int h = 1; h <= aantalA4Hoog; h++) {
-//            do {
                 rijImageList.add(new ArrayList<String>());
                 oudeHorisontale = 0;
                 hoogteNaSchalen = 0;
-                horisontale = A4L_BreedteInPX();
+                horisontale = int_A4L_BreedteInPX;
                 //verwerk alle pics voor 1 rij
                 for (int b = 1; b <= aantalKolommenA4Breed; b++) {
                     System.out.println("b= " + b);
                     deelImage(oudeHorisontale, oudeVerticale, horisontale, verticale); // hier worde de pic aann de arry imageList toegevoegd
                     oudeHorisontale = horisontale;
-                    horisontale = horisontale + A4L_BreedteInPX();
+                    horisontale = horisontale + int_A4L_BreedteInPX;
 
                 }
                 oudeVerticale = verticale;
                 verticale = verticale + A4L_HoogteInPX();
                 rowNr++;
-//            } while (!eindeVertikaalBereikt);
             }
             //  verwerking resthoogte, als er is
             int resthoogte = hoogteOndersteStukjePX(imageHoogteInPX, imageBreedteInPX);
             if (resthoogte > 0) {
                 rijImageList.add(new ArrayList<String>());
                 oudeHorisontale = 0;
-                horisontale = A4L_BreedteInPX();
+                horisontale = int_A4L_BreedteInPX;
                 verticale = oudeVerticale + resthoogte;
                 for (int b = 1; b <= aantalKolommenA4Breed; b++) {
 
                     deelImageOndersteRij(oudeHorisontale, oudeVerticale, horisontale, verticale); // hier worde de pic aann de arry imageList toegevoegd
                     oudeHorisontale = horisontale;
-                    horisontale = horisontale + A4L_BreedteInPX();
+                    horisontale = horisontale + int_A4L_BreedteInPX;
 
                 }
             }
 
-            /*            // looping over de rijen 
-            do {
-                rijImageList.add(new ArrayList<String>());
-                oudeHorisontale = 0;
-                hoogteNaSchalen = 0;
-                eindeHorisontaalBereikt = false;
-                horisontale = A4L_BreedteInPX();
-
-                //verwerk alle pics voor 1 rij
-                do {
-                    deelImage(oudeHorisontale, oudeVerticale, horisontale, verticale); // hier worde de pic aann de arry imageList toegevoegd
-                    oudeHorisontale = horisontale;
-                    horisontale = horisontale + A4L_BreedteInPX();
-
-                } while (!eindeHorisontaalBereikt);
-                oudeVerticale = verticale;
-                verticale = verticale + A4L_HoogteInPX();
-                rowNr++;
-
-            } while (!eindeVertikaalBereikt);
-             */
-        } catch (IOException ex) {
+         } catch (IOException ex) {
             System.out.println("in gdReuze 101  IO exception ");
         }
 
@@ -190,7 +171,7 @@ public class gdReuze {
 
 //                Image im = schalen(deelSource, A4BreedPx, A4HoogPx);
 //                BufferedImage bfToConvert = convertToBufferedImage(deelSource);
-                BufferedImage bfToConvert = vergrootHetImage(convertToBufferedImage(deelSource), A4L_BreedteInPX(), A4L_HoogteInPX() );
+                BufferedImage bfToConvert = vergrootHetImage(convertToBufferedImage(deelSource), int_A4L_BreedteInPX, int_A4L_HoogteInPX );
                 File doelFile = maakSubFile(currentFile, "");
 
                 if (ImageIO.write(bfToConvert, format, doelFile)) {
@@ -245,26 +226,7 @@ public class gdReuze {
         return (imageImage);
     }
 
-    /*
-        if (hoogteNaSchalen == 0) {
-            imageImage = imageImage.getScaledInstance(schermwijdte, -1, Image.SCALE_SMOOTH);
-            imageHoogte = imageImage.getHeight(null);
-            System.out.println("Scalen op breedte");
-            hoogteNaSchalen = imageHoogte;
-
-        } else {
-            imageImage = imageImage.getScaledInstance(-1, hoogteNaSchalen, Image.SCALE_SMOOTH);
-            imageHoogte = imageImage.getHeight(null);
-            System.out.println("Scalen op hoogte");
-
-        }
-        imageBreedte = imageImage.getWidth(null);
-        System.out.println("schalen, H= " + imageHoogte + " B= " + imageBreedte);
-        System.out.print("hoogteNaSchalen= " + hoogteNaSchalen);
-        System.out.println("    schermwijdte= " + schermwijdte);
-
-        //}
-     */
+   
     // convert Image to BufferedImage
     public static BufferedImage convertToBufferedImage(Image img) {
 
@@ -302,9 +264,7 @@ public class gdReuze {
         return eruit;
     }
 
-//    static int restDoelBreedte() {
-//        return (breedteDoel - (heleMalenA4l() * A4Hoog));
-//    }
+
     static double aantalA4LandscapeInImage(int imagePxHoog, int imagePxBreed) {
         double double1 = imagePxHoog * A4LBreed * aantalKolommenA4Breed;
         double double2 = A4LHoog * imagePxBreed;
@@ -321,11 +281,7 @@ public class gdReuze {
         return eruit;
     }
 
-//    static double aantalA4LinDoel() {
-//        double eruit;
-//        eruit = breedteDoel * 1.0 / A4LHoog;
-//        return (eruit);
-//    }
+
     static int A4L_HoogteInPX() {
 //  dit is de hoogte van een landscape a4 tje vertaald naat aantal px
         int eruit = 0;
@@ -354,14 +310,4 @@ public class gdReuze {
         eruit = (int)uitkomst;
         return (eruit);
     }
-
-    //    public static String getExtension(String fileName) {
-//        int index = fileName.lastIndexOf('.');
-//        if (index == -1) {
-//            return "";
-//        } else {
-//            index++;
-//            return fileName.substring(index);
-//        }
-//    }
 }
